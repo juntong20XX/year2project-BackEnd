@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 # Items
-items: dict[str, int] = {}
+items: dict[str, int] = {"Raspberry pi": 135}
 
 # 用户文件路径
 USER_FILE = 'user_data.json'
@@ -28,8 +28,8 @@ USER_FILE = 'user_data.json'
 def ensure_files():
     # 创建用户文件（如果不存在）
     if not os.path.exists(USER_FILE):
-        with open(USER_FILE, 'w') as f:
-            json.dump({}, f)
+        with open(USER_FILE, 'wb') as fp:
+            fp.write(b"")
 
 
 ensure_files()
@@ -56,10 +56,10 @@ async def register_user(username: str):
     with open(USER_FILE, 'r') as f:
         users = json.load(f)
 
-    # 更新或添加用户
-    users[username] = {
-        "totp_secret": totp_secret
-    }
+    if len(users) > 1:
+        raise HTTPException(status_code=400, detail="user exits")
+
+    users = [username, totp_secret]
 
     # 写回文件
     with open(USER_FILE, 'w') as f:
@@ -71,16 +71,22 @@ async def register_user(username: str):
 # 用户登录
 @app.post("/login")
 async def login_user(user: UserLogin):
+    """
+    登录 用户在前端输入用户名和 totp
+    但是吧, 登录成功了也不会去注册任何东西, 未登录也不影响操作 item 参数. 反正先这样吧.
+    :param user:
+    :return:
+    """
     # 读取用户数据
     with open(USER_FILE, 'r') as f:
-        users = json.load(f)
+        username, totp_secret = json.load(f)
 
     # 检查用户是否存在
-    if user.username not in users:
-        raise HTTPException(status_code=404, detail="User not found")
+    if user.username != username:
+        raise HTTPException(status_code=404, detail="User not found, want `%s`, got `%s`" % (username, user.username))
 
     # 验证 TOTP
-    totp = pyotp.TOTP(users[user.username]['totp_secret'])
+    totp = pyotp.TOTP(totp_secret)
     if not totp.verify(user.totp_code):
         raise HTTPException(status_code=401, detail="Invalid TOTP code")
 
