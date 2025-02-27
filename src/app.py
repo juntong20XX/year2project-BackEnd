@@ -29,7 +29,7 @@ class Items:
         self._items_cache = {}
 
     def _cache_autoremove(self):
-        keys = set(self._items_cache) - set(self.client.get_serial_mapping())
+        keys = set(self._items_cache) - set(self.get_names())
         for key in keys:
             self._items_cache.pop(key)
 
@@ -42,6 +42,13 @@ class Items:
             if match_name:
                 name = "Arduino " + match_name.group(1)
             yield name, self._items_cache.get(name, 90)
+
+    def get_names(self):
+        for name in self.client.get_serial_mapping().values():
+            match_name = re.match(r".+?_\d{4}_(\w+)-if00", name)
+            if match_name:
+                name = "Arduino " + match_name.group(1)
+            return name
 
     def get_path_of(self, name: str) -> str:
         self._cache_autoremove()
