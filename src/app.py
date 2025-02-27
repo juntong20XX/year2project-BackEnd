@@ -28,7 +28,13 @@ class Items:
         self.client = SerialClient()
         self._items_cache = {}
 
+    def _cache_autoremove(self):
+        keys = set(self._items_cache) - set(self.client.get_serial_mapping())
+        for key in keys:
+            self._items_cache.pop(key)
+
     def items(self) -> tuple[str, int]:
+        self._cache_autoremove()
         for path, name in self.client.get_serial_mapping().items():
             # name likes `usb-Arduino__www.arduino.cc__0043_33437363436351408031-if00`
             # name likes `usb-Arduino__www.arduino.cc__0043_243363036333517161C2-if00`
@@ -38,6 +44,7 @@ class Items:
             yield name, self._items_cache.get(name, 90)
 
     def get_path_of(self, name: str) -> str:
+        self._cache_autoremove()
         for path, n in self.client.get_serial_mapping().items():
             if name == n:
                 return path
@@ -47,6 +54,7 @@ class Items:
         raise KeyError
 
     def __getitem__(self, item):
+        self._cache_autoremove()
         return self._items_cache.get(item, 90)
 
     def __setitem__(self, key, value):
