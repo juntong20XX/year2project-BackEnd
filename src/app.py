@@ -54,6 +54,9 @@ class Items:
         self.client.add_command(self.get_path_of(key), 0x0131, value)
         self._items_cache[key] = value
 
+    def __iter__(self):
+        return self.items()
+
 
 items = Items()
 
@@ -139,13 +142,13 @@ async def get_items():
 # 更新 item
 @app.put("/items")
 async def update_item(item: ItemUpdate):
-    # 检查 item 是否存在
-    if item.key not in items:
-        raise HTTPException(status_code=404, detail="Item not found")
-
-    # 验证值范围
-    if item.value < 45 or item.value > 135:
-        raise HTTPException(status_code=400, detail="Value must be between 45 and 135")
+    # # 检查 item 是否存在
+    # if item.key not in items:
+    #     raise HTTPException(status_code=404, detail="Item not found")
+    #
+    # # 验证值范围
+    # if item.value < 45 or item.value > 135:
+    #     raise HTTPException(status_code=400, detail="Value must be between 45 and 135")
 
     # 更新 item
     try:
