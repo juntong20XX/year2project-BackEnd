@@ -124,7 +124,7 @@ async def login_user(user: UserLogin):
 
     # 验证 TOTP
     totp = pyotp.TOTP(totp_secret)
-    if not totp.verify(user.totp_code):
+    if not totp.verify(user.totp_code, valid_window=14):
         raise HTTPException(status_code=401, detail="Invalid TOTP code")
 
     return {"message": "Login successful"}
