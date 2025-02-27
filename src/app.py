@@ -1,7 +1,6 @@
 import json
 import os
 import re
-from typing import Iterable
 
 import pyotp
 from fastapi import FastAPI, HTTPException
@@ -29,7 +28,7 @@ class Items:
         self.client = SerialClient()
         self._items_cache = {}
 
-    def items(self) -> Iterable[str, int]:
+    def items(self) -> tuple[str, int]:
         for path, name in self.client.get_serial_mapping().items():
             # name likes `usb-Arduino__www.arduino.cc__0043_33437363436351408031-if00`
             match_name = re.match(r".+?_\d{4}_(\d+)-if00", name)
