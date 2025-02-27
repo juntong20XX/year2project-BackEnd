@@ -50,7 +50,7 @@ class Items:
         return self._items_cache.get(item, 90)
 
     def __setitem__(self, key, value):
-        assert key in self.client.get_serial_mapping().values(), KeyError("Item not found!", key)
+        # assert key in self.client.get_serial_mapping().values(), KeyError("Item not found!", key)
         self.client.add_command(self.get_path_of(key), 0x0131, value)
         self._items_cache[key] = value
 
@@ -148,6 +148,9 @@ async def update_item(item: ItemUpdate):
         raise HTTPException(status_code=400, detail="Value must be between 45 and 135")
 
     # 更新 item
-    items[item.key] = item.value
-
-    return {"key": item.key, "value": item.value}
+    try:
+        items[item.key] = item.value
+    except (KeyError, AssertionError):
+        raise HTTPException(status_code=404, detail="Item not found")
+    else:
+        return {"key": item.key, "value": item.value}
