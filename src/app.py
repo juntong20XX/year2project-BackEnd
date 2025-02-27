@@ -31,7 +31,8 @@ class Items:
     def items(self) -> tuple[str, int]:
         for path, name in self.client.get_serial_mapping().items():
             # name likes `usb-Arduino__www.arduino.cc__0043_33437363436351408031-if00`
-            match_name = re.match(r".+?_\d{4}_(\d+)-if00", name)
+            # name likes `usb-Arduino__www.arduino.cc__0043_243363036333517161C2-if00`
+            match_name = re.match(r".+?_\d{4}_(\w+)-if00", name)
             if match_name:
                 name = "Arduino " + match_name.group(1)
             yield name, self._items_cache.get(name, 90)
@@ -49,7 +50,7 @@ class Items:
         return self._items_cache.get(item, 90)
 
     def __setitem__(self, key, value):
-        assert key in self._items_cache, KeyError("Item not found!", key)
+        assert key in self.client.get_serial_mapping().values(), KeyError("Item not found!", key)
         self.client.add_command(self.get_path_of(key), 0x0131, value)
         self._items_cache[key] = value
 
