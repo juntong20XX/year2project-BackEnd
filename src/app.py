@@ -1,10 +1,14 @@
 import json
 import os
+import re
+from typing import Iterable
 
 import pyotp
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+from iot_hostcomputer import SerialClient, start_server_daemon
 
 app = FastAPI()
 
@@ -17,8 +21,41 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Items
-items: dict[str, int] = {"Raspberry pi": 135}
+class Items:
+    def __init__(self):
+        self.server = start_server_daemon()
+        self.client = SerialClient()
+        self._items_cache = {}
+
+    def items(self) -> Iterable[str, int]:
+        for path, name in self.client.get_serial_mapping().items():
+            # name likes `usb-Arduino__www.arduino.cc__0043_33437363436351408031-if00`
+            match_name = re.match(r".+?_\d{4}_(\d+)-if00", name)
+            if match_name:
+                name = "Arduino " + match_name.group(1)
+            yield name, self._items_cache.get(name, 90)
+
+    def get_path_of(self, name: str) -> str:
+        for path, n in self.client.get_serial_mapping().items():
+            if name == n:
+                return path
+            number = name.split(" ")[-1]
+            if f"usb-Arduino__www.arduino.cc__0043_{number}-if00" == n:
+                return path
+        raise KeyError
+
+    def __getitem__(self, item):
+        return self._items_cache.get(item, 90)
+
+    def __setitem__(self, key, value):
+        assert key in self._items_cache, KeyError("Item not found!", key)
+        self.client.add_command(self.get_path_of(key), 0x0131, value)
+        self._items_cache[key] = value
+
+
+items = Items()
 
 # 用户文件路径
 USER_FILE = 'user_data.json'
