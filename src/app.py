@@ -48,7 +48,7 @@ class Items:
             match_name = re.match(r".+?_\d{4}_(\w+)-if00", name)
             if match_name:
                 name = "Arduino " + match_name.group(1)
-            return name
+            yield name
 
     def get_path_of(self, name: str) -> str:
         self._cache_autoremove()
