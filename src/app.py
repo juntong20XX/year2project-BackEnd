@@ -137,7 +137,7 @@ async def login_user(user: UserLogin):
         username, totp_secret = json.load(f)
 
     # 检查用户是否存在
-    if user.username != username:
+    if user.username.lower() != username:
         raise HTTPException(status_code=404, detail="User not found, want `%s`, got `%s`" % (username, user.username))
 
     # 验证 TOTP
